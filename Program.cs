@@ -1,224 +1,77 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Task2
+namespace Task3
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Good iPhone12 = new Good("IPhone 12");
-            Good iPhone11 = new Good("IPhone 11");
+            Pathfinder pathfinder = new Pathfinder(new ConsoleLogWriter());
 
-            Warehouse warehouse = new Warehouse();
+            pathfinder.Find();
 
-            Shop shop = new Shop(warehouse);
+            pathfinder = new Pathfinder(new FileLogWriter());
 
-            warehouse.Delive(iPhone12, 10);
-            warehouse.Delive(iPhone11, 2);
-            warehouse.Delive(iPhone12, 10);
-
-            warehouse.ShowCells();
-
-            Console.WriteLine();
-
-            Cart cart = shop.TakeCart();
-
-            cart.Add(iPhone11, 2);
-            cart.Add(iPhone12, 5);
-            cart.Add(iPhone12, 2);
-
-            cart.Show();
-
-            Console.WriteLine();
-
-            warehouse.ShowCells();
-
-            Console.WriteLine();
-
-            cart.Cancel();
-
-            cart.Show();
-
-            Console.WriteLine();
-
-            warehouse.ShowCells();
-
-            Console.WriteLine("\n" + cart.Order());
+            pathfinder.Find();
         }
     }
 
-    class Good
+    interface ILogger
     {
-        public string Name { get; private set; }
+        void Find();
+    }
 
-        public Good(string name)
+    class Pathfinder : ILogger
+    {
+        private ILogger _logger;
+
+        public Pathfinder(ILogger logger) => _logger = logger;
+
+        public void Find() => _logger.Find();
+    }
+
+    class FileLogWriter : ILogger
+    {
+        public void Find()
         {
-            if (name.Length <= 0)
-                throw new ArgumentException("Некорректное название товара");
-
-            Name = name;
+            Console.WriteLine("Я пишу в файл");
         }
     }
 
-    class Cell
+    class ConsoleLogWriter : ILogger
     {
-        public Good Good { get; private set; }
-        public int Count { get; private set; }
-
-        public Cell(Good good, int count)
+        public void Find()
         {
-            if (count <= 0)
-                throw new ArgumentException("Некорректное количество товара");
-
-            Good = good;
-            Count = count;
-        }
-
-        public void Take(int count)
-        {
-            if (Count < count)
-                throw new ArgumentException("Некорректное количество товара");
-
-            Count -= count;
-        }
-
-        public void Merge(Cell newCell)
-        {
-            if (newCell.Good != Good)
-                throw new InvalidOperationException();
-
-            Count += newCell.Count;
+            Console.WriteLine("Я пишу в консоль");
         }
     }
 
-    class Warehouse
+    class FileLogWriterWeekly : ILogger
     {
-        private List<Cell> _cells = new List<Cell>();
-
-        public void Delive(Good good, int count)
+        public void Find()
         {
-            var newCell = new Cell(good, count);
-
-            Cell cell = _cells.FirstOrDefault(c => c.Good == good);
-
-            if (cell == null)
-                _cells.Add(newCell);
-            else
-                cell.Merge(newCell);
-        }
-
-        public void ShowCells()
-        {
-            foreach (var cell in _cells)
-            {
-                Console.WriteLine($"Товар - {cell.Good.Name}, Осталось на складе - {cell.Count} шт.");
-            }
-        }
-
-        public Cell TakeGood(Good good, int count)
-        {
-            var newCell = _cells.FirstOrDefault(c => c.Good == good);
-
-            if (newCell == null)
-            {
-                Console.WriteLine("Такого товара нет на складе.");
-                return null;
-            }
-
-            if (newCell.Count < count)
-            {
-                Console.WriteLine("Недостаточно товара на складе.");
-                return null;
-            }
-
-            newCell.Take(count);
-
-            return new Cell(newCell.Good, count);
+            if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
+                Console.WriteLine("Я пишу в файл по пятницам");
         }
     }
 
-    class Shop
+    class ConsoleLogWriterWeekly : ILogger
     {
-        private Warehouse _warehouse;
-
-        public string Paylink { get; private set; } = "Случайная строка";
-
-        public Shop(Warehouse warehouse)
+        public void Find()
         {
-            if (warehouse == null)
-                throw new InvalidOperationException();
-
-            _warehouse = warehouse;
-        }
-
-        public Cell Buy(Good good, int count)
-        {
-            return _warehouse.TakeGood(good, count);
-        }
-
-        public Cart TakeCart() => new Cart(this);
-
-        public void ReturnToWarehouse(IReadOnlyList<Cell> cells)
-        {
-            foreach (var cell in cells)
-            {
-                _warehouse.Delive(cell.Good, cell.Count);
-            }
+            if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
+                Console.WriteLine("Я пишу в консоль по пятницам");
         }
     }
 
-    class Cart
+    class SecureLogWriter : ILogger
     {
-        private Shop _shop;
-        private List<Cell> _buyedGoods = new List<Cell>();
-
-        public Cart(Shop shop)
+        public void Find()
         {
-            if (shop == null)
-                throw new InvalidOperationException();
+            Console.WriteLine("Я пишу в консоль");
 
-            _shop = shop;
+            if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
+                Console.WriteLine("Я пишу в консоль по пятницам");
         }
-
-        public void Add(Good good, int count)
-        {
-            Cell newCell = _shop.Buy(good, count);
-
-            Cell cell = _buyedGoods.FirstOrDefault(c => c.Good == good);
-
-            if (newCell == null)
-                return;
-
-            if (cell == null)
-                _buyedGoods.Add(newCell);
-            else
-                cell.Merge(newCell);
-        }
-
-        public void Show()
-        {
-            Console.WriteLine("Товары в корзине: ");
-
-            foreach (var cell in _buyedGoods)
-            {
-                Console.WriteLine($"Товар - {cell.Good.Name}, количество - {cell.Count} шт.");
-            }
-        }
-
-        public void Pay()
-        {
-            _buyedGoods.Clear();
-        }
-
-        public void Cancel()
-        {
-            _shop.ReturnToWarehouse(_buyedGoods);
-
-            _buyedGoods.Clear();
-        }
-
-        public string Order() => _shop.Paylink;
     }
 }

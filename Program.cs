@@ -1,77 +1,85 @@
 ﻿using System;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace Task3
+namespace Task4
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Pathfinder pathfinder = new Pathfinder(new ConsoleLogWriter());
+            Order order = new Order(100, 100);
 
-            pathfinder.Find();
+            MasterCard masterCard = new MasterCard();
+            Visa visa = new Visa();
+            GooglePay googlePay = new GooglePay();
 
-            pathfinder = new Pathfinder(new FileLogWriter());
-
-            pathfinder.Find();
+            Console.WriteLine(masterCard.GetPayingLink(order) + "\n");
+            Console.WriteLine(visa.GetPayingLink(order) + "\n");
+            Console.WriteLine(googlePay.GetPayingLink(order) + "\n");
         }
     }
 
-    interface ILogger
+    class Order 
     {
-        void Find();
-    }
+        public int Id { get; private set; }
+        public int Amount { get; private set; }
 
-    class Pathfinder : ILogger
-    {
-        private ILogger _logger;
-
-        public Pathfinder(ILogger logger) => _logger = logger;
-
-        public void Find() => _logger.Find();
-    }
-
-    class FileLogWriter : ILogger
-    {
-        public void Find()
+        public Order(int id, int amount)
         {
-            Console.WriteLine("Я пишу в файл");
+            if (id < 0)
+                throw new ArgumentException(nameof(id));
+
+            if (amount < 0)
+                throw new ArgumentException(nameof(amount));
+
+            Id = id;
+            Amount = amount;
         }
     }
 
-    class ConsoleLogWriter : ILogger
+    interface IPaymentSystem
     {
-        public void Find()
+        public string URLLink { get; }
+
+        public string GetPayingLink(Order order);
+    }
+
+    class MasterCard : IPaymentSystem
+    {
+        public string URLLink => "pay.system1.ru/order?amount=12000RUB&hash=";
+
+        public string GetPayingLink(Order order)
         {
-            Console.WriteLine("Я пишу в консоль");
+            var hash = MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(order.Id.ToString()));
+
+            return URLLink + Convert.ToBase64String(hash);
         }
     }
 
-    class FileLogWriterWeekly : ILogger
+    class Visa : IPaymentSystem
     {
-        public void Find()
+        public string URLLink => "order.system2.ru/pay?hash=";
+
+        public string GetPayingLink(Order order)
         {
-            if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
-                Console.WriteLine("Я пишу в файл по пятницам");
+            var hash = MD5.Create().ComputeHash(Encoding.UTF8.GetBytes((order.Id + order.Amount).ToString()));
+
+            return URLLink + Convert.ToBase64String(hash);
         }
     }
 
-    class ConsoleLogWriterWeekly : ILogger
+    class GooglePay : IPaymentSystem
     {
-        public void Find()
-        {
-            if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
-                Console.WriteLine("Я пишу в консоль по пятницам");
-        }
-    }
+        private string _salt = "ijunior";
 
-    class SecureLogWriter : ILogger
-    {
-        public void Find()
-        {
-            Console.WriteLine("Я пишу в консоль");
+        public string URLLink => "system3.com/pay?amount=12000&curency=RUB&hash=";
 
-            if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
-                Console.WriteLine("Я пишу в консоль по пятницам");
+        public string GetPayingLink(Order order)
+        {
+            var hash = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes((order.Amount + order.Id + _salt).ToString()));
+
+            return URLLink + Convert.ToBase64String(hash);
         }
     }
 }

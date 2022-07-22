@@ -1,14 +1,33 @@
-﻿public static void CreateOnMap()
+﻿class Player
 {
-    //Создание объекта на карте
+    public string Name { get; private set; }
+    public int Age { get; private set; }
+
+    public void Move()
+    {
+        //Do move
+    }
 }
 
-public static void SetRandomChance()
+class Movement
 {
-    _chance = Random.Range(0, 100);
+    private float DirectionX { get; private set; }
+    private float DirectionY { get; private set; }
+    public float Speed { get; private set; }
 }
 
-public static int GetCalculatedSalary(int hoursWorked)
+class Weapon
 {
-    return _hourlyRate * hoursWorked;
+    public int Damage { get; private set; }
+    public float Cooldown { get; private set; }
+
+    public void Attack()
+    {
+        //attack
+    }
+
+    public bool IsReloading()
+    {
+        throw new NotImplementedException();
+    }
 }

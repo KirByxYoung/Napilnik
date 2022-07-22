@@ -1,8 +1,14 @@
-﻿class Player { }
-class Gun { }
-class Camera { }
-
-class Squad
+﻿public static void CreateOnMap()
 {
-    public IReadOnlyCollection<Unit> UnitsToGet { get; private set; }
+    //Создание объекта на карте
+}
+
+public static void SetRandomChance()
+{
+    _chance = Random.Range(0, 100);
+}
+
+public static int GetCalculatedSalary(int hoursWorked)
+{
+    return _hourlyRate * hoursWorked;
 }

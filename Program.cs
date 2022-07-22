@@ -1,4 +1,8 @@
-﻿class Weapon
+﻿class Player { }
+class Gun { }
+class Camera { }
+
+class Squad
 {
-    public void Shoot() { }
+    public IReadOnlyCollection<Unit> UnitsToGet { get; private set; }
 }

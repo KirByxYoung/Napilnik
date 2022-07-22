@@ -1,12 +1,8 @@
-﻿namespace Task4
+﻿public static int Search(int[] array, int element)
 {
-    public static int Sort(int a, int b, int c)
-    {
-        if (a < b)
-            return b;
-        else if (a > c)
-            return c;
-        else
-            return a;
-    }
+    for (int i = 0; i < array.Length; i++)
+        if (array[i] == element)
+            return i;
+
+    return -1;
 }
